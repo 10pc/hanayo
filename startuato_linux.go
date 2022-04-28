@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rcrowley/goagain"
+	"zxq.co/ripple/schiavolib"
 )
 
 var l net.Listener
@@ -43,8 +45,11 @@ func startuato(engine *gin.Engine) bool {
 			l, err = net.Listen("tcp", config.ListenTo)
 		}
 		if err != nil {
+			schiavo.Bunker.Send(err.Error())
 			log.Fatalln(err)
 		}
+
+		schiavo.Bunker.Send(fmt.Sprint("LISTENINGU STARTUATO ON ", l.Addr()))
 
 		// Accept connections in a new goroutine.
 		go hs(l, engine)
@@ -52,10 +57,12 @@ func startuato(engine *gin.Engine) bool {
 	} else {
 
 		// Resume accepting connections in a new goroutine.
+		schiavo.Bunker.Send(fmt.Sprint("LISTENINGU RESUMINGU ON ", l.Addr()))
 		go hs(l, engine)
 
 		// Kill the parent, now that the child has started successfully.
 		if err := goagain.Kill(); err != nil {
+			schiavo.Bunker.Send(err.Error())
 			log.Fatalln(err)
 		}
 
@@ -64,6 +71,7 @@ func startuato(engine *gin.Engine) bool {
 	go func() {
 		// Block the main goroutine awaiting signals.
 		if _, err := goagain.Wait(l); err != nil {
+			schiavo.Bunker.Send(err.Error())
 			log.Fatalln(err)
 		}
 
@@ -73,9 +81,11 @@ func startuato(engine *gin.Engine) bool {
 		// In this case, we'll simply stop listening and wait one second.
 		iZingri = true
 		if err := l.Close(); err != nil {
+			schiavo.Bunker.Send(err.Error())
 			log.Fatalln(err)
 		}
 		if err := db.Close(); err != nil {
+			schiavo.Bunker.Send(err.Error())
 			log.Fatalln(err)
 		}
 		returnCh <- false
@@ -110,8 +120,10 @@ func updateFromRemote(c *gin.Context) {
 		if !execCommand("git", "submodule", "update") {
 			return
 		}
-		// will ensure dependencies are up-to-date
-		if !execCommand("go", "get", "-v", "-d") {
+		// go get
+		//        -u: update all dependencies
+		//        -d: stop after downloading deps
+		if !execCommand("go", "get", "-v", "-u", "-d") {
 			return
 		}
 		if !execCommand("bash", "-c", "go build -v") {

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mailgun/mailgun-go.v1"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
 	"zxq.co/x/rs"
 )
 
@@ -65,13 +65,13 @@ func passwordReset(c *gin.Context) {
 	}
 
 	content := T(c,
-		"Hey %s! Someone, which we really hope was you, requested a password reset for your account. In case it was you, please <a href='%s'>click here</a> to reset your password on Kawata. Otherwise, silently ignore this email.",
+		"Hey %s! Someone, which we really hope was you, requested a password reset for your account. In case it was you, please <a href='%s'>click here</a> to reset your password on Ripple. Otherwise, silently ignore this email.",
 		username,
 		config.BaseURL+"/pwreset/continue?k="+key,
 	)
 	msg := mailgun.NewMessage(
 		config.MailgunFrom,
-		T(c, "Kawata password recovery instructions"),
+		T(c, "RealistikOsu! password recovery instructions"),
 		content,
 		email,
 	)
@@ -84,7 +84,7 @@ func passwordReset(c *gin.Context) {
 		return
 	}
 
-	addMessage(c, successMessage{T(c, "Done! You should shortly receive an email from us at the email you used to sign up on Kawata.")})
+	addMessage(c, successMessage{T(c, "Done! You should shortly receive an email from us at the email you used to sign up on Ripple.")})
 	getSession(c).Save()
 	c.Redirect(302, "/")
 }

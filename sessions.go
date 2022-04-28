@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
 	"zxq.co/x/rs"
 )
 
@@ -19,9 +19,7 @@ func sessionInitializer() func(c *gin.Context) {
 
 		var passwordChanged bool
 		userid := sess.Get("userid")
-		var hasUser bool
 		if userid, ok := userid.(int); ok {
-			hasUser = true
 			ctx.User.ID = userid
 			var (
 				pRaw     int64
@@ -65,15 +63,6 @@ func sessionInitializer() func(c *gin.Context) {
 			}
 		}
 
-		if hasUser {
-			if v, ok := sess.Get("avatars_version").(uint64); ok {
-				ctx.AvatarsVersion = v
-			} else {
-				ctx.AvatarsVersion = 0
-				sess.Set("avatars_version", 0)
-			}
-		}
-
 		var addBannedMessage bool
 		if ctx.User.ID != 0 && (ctx.User.Privileges&common.UserPrivilegeNormal == 0) {
 			ctx = context{}
@@ -87,7 +76,7 @@ func sessionInitializer() func(c *gin.Context) {
 		c.Set("session", sess)
 
 		if addBannedMessage {
-			addMessage(c, warningMessage{T(c, "You have been automatically logged out of your account because your account has either been banned or locked. Should you believe this is a mistake, you can contact our support team at accounts@kawata.pw.")})
+			addMessage(c, warningMessage{T(c, "You have been automatically logged out of your account because your account has either been banned or locked. Should you believe this is a mistake, you can contact our support team at rosusupport@protonmail.com.")})
 		}
 		if passwordChanged {
 			addMessage(c, warningMessage{T(c, "You have been automatically logged out for security reasons. Please <a href='/login?redir=%s'>log back in</a>.", url.QueryEscape(c.Request.URL.Path))})

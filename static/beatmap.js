@@ -3,18 +3,19 @@
   setData.ChildrenBeatmaps.forEach(function(diff) {
     mapset[diff.BeatmapID] = diff;
   });
-  function loadLeaderboard(b, m, r) {
+  console.log(mapset);
+  function loadLeaderboard(b, m) {
     var wl = window.location;
     window.history.replaceState('', document.title,
-      "/b/" + b + "?mode=" + m + "&relax=" + r + wl.hash);
+      "/b/" + b + "?mode=" + m + wl.hash);
     api("scores?sort=score,desc&sort=id,asc", {
       mode : m,
       b : b,
       p : 1,
       l : 50,
-      relax: r,
     },
     function(data) {
+      console.log(data);
       var tb = $(".ui.table tbody");
       tb.find("tr").remove();
       if (data.scores == null) {
@@ -62,36 +63,20 @@
     $("#bpm").html(diff.BPM);
 
     // hide mode for non-std maps
+    console.log("favMode", favMode);
     if (diff.Mode != 0) {
-      // Non-std! Force right game mode
-      currentMode = diff.Mode;
+      currentMode = (currentModeChanged ? currentMode : favMode);
       $("#mode-menu").hide();
     } else {
-      // Std, all modes supported
-      // Choose fav if no mode qs param was provided
-      if (currentMode === null) {
-        currentMode = favMode;
-      }
+      currentMode = diff.Mode;
       $("#mode-menu").show();
-      $("#relax-menu").show();
-    }
-
-    // hide classic/relax switcher for mania only-maps
-    if (diff.Mode == 3) {
-      currentRelax = 0;
-      $("#relax-menu").hide();
-    } else if (currentRelax === null) {
-      // Chose fav if no relax qs param was provided
-      currentRelax = favRelax;
     }
 
     // update mode menu
     $("#mode-menu .active.item").removeClass("active");
     $("#mode-" + currentMode).addClass("active");
 
-    // brico meiser
-    $("#relax-menu>[data-relax=" + favRelax + "]").addClass("active");
-    loadLeaderboard(bid, currentMode, currentRelax);
+    loadLeaderboard(bid, currentMode);
   }
   window.loadLeaderboard = loadLeaderboard;
   window.changeDifficulty = changeDifficulty;
@@ -110,24 +95,8 @@
       $("#mode-menu .active.item").removeClass("active");
       $(this).addClass("active");
       currentMode = $(this).data("mode");
-      if (currentMode == 3) {
-        $("#relax-menu>[data-relax=1]").addClass("disabled").removeClass("active");
-        $("#relax-menu>[data-relax=0]").addClass("active");
-      } else {
-        $("#relax-menu>[data-relax=1]").removeClass("disabled");
-      }
-      loadLeaderboard(beatmapID, currentMode, currentRelax);
+      loadLeaderboard(beatmapID, currentMode);
+      currentModeChanged = true;
     });
-  $("#relax-menu .item")
-    .click(function(e) {
-      e.preventDefault();
-      if ($(this).hasClass("disabled")) {
-        return;
-      }
-      $("#relax-menu .active.item").removeClass("active");
-      $(this).addClass("active");
-      currentRelax = $(this).data("relax");
-      loadLeaderboard(beatmapID, currentMode, currentRelax);
-    })
   $("table.sortable").tablesort();
 })();

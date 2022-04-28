@@ -23,7 +23,7 @@ var pageMappings = map[int]interface{}{
 	12: "/",
 	13: "/leaderboard",
 	14: "/doc",
-	15: "/", // ripple v1 documentation stuff. this stuff is so old I won't even bother.
+	15: "/", // RealistikOsu! v1 documentation stuff. this stuff is so old I won't even bother.
 	16: func(u url.URL) string {
 		return fmt.Sprintf("/doc/%s", u.Query().Get("id"))
 	},
@@ -73,7 +73,7 @@ func CheckRedirect(c *gin.Context) {
 		mapped := pageMappings[i]
 		if mapped == nil {
 			u := c.Request.URL
-			u.Host = "admin.kawata.pw"
+			u.Host = "old.ripple.moe"
 			c.Redirect(302, u.String())
 			return
 		}

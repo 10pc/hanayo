@@ -1,5 +1,5 @@
 # JavaScript
-msgid "An error occurred while contacting the Ripple API. Please report this to a Ripple developer."
+msgid "An error occurred while contacting the RealistikOsu! API. Please report this to a RealistikOsu! developer."
 msgstr ""
 
 # This is a quote of UNDERTALE if you didn't know.
@@ -47,9 +47,6 @@ msgid "Load more"
 msgstr ""
 
 msgid "Best scores"
-msgstr ""
-
-msgid "Most played beatmaps"
 msgstr ""
 
 msgid "Recent scores"
@@ -103,8 +100,8 @@ msgid_plural "{{ stars }} stars"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "<b>{{ months }}</b> month costs <b>€ {{ eur }}</b>"
-msgid_plural "<b>{{ months }}</b> months cost <b>€ {{ eur }}</b>"
+msgid "<b>{{ months }}</b> month costs <b>£{{ eur }}</b>"
+msgid_plural "<b>{{ months }}</b> months cost <b>£{{ eur }}</b>"
 msgstr[0] ""
 msgstr[1] ""
 

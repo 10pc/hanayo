@@ -8,25 +8,21 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<title>{{ if .TitleBar }}{{ .T .TitleBar }} - {{ end }}Kawata</title>
+		<title>{{ if .TitleBar }}{{ .T .TitleBar }} - {{ end }}RealistikOsu!</title>
 
-		<link rel="icon" href="/static/favicon.ico" />
-		<link rel="stylesheet" type="text/css" href="/static/css/font-awesome-pro.css?{{ unixNano }}">
-		<link rel="stylesheet" type="text/css" href="/static/{{ if not $ds }}dark/{{ end }}semantic.min.css?{{ unixNano }}">
+		<link rel="stylesheet" type="text/css" href="/static/{{ if $ds }}dark/{{ end }}semantic.min.css?{{ unixNano }}">
 		<link rel="stylesheet" type="text/css" href="/static/ripple.css?{{ unixNano }}">
-		<link rel="stylesheet" type="text/css" href="/static/jquery.lsxemojipicker.css?{{ unixNano }}">
-		<link rel="stylesheet" type="text/css" href="/static/kawata.css?{{ unixNano }}">
-		<link rel="stylesheet" type="text/css" href="/static/kawata-buttons.css?{{ unixNano }}">
-		<link rel="stylesheet" type="text/css" href="/static/{{ if not $ds }}dark/{{ end }}kawata-color.css?{{ unixNano }}">
-		{{ if and .DisableHH .KyutGrill }}
-		<style>
-			#fivehead::before {
-				background-image: url('{{ if .KyutGrillAbsolute }}{{ .KyutGrill }}{{ else }}/static/headers/{{ .KyutGrill }}{{ end }}');
-			}
-		</style>
-		{{ end }}
+		<link rel="stylesheet" type="text/css" href="/static/snow/snow.css?{{ unixNano }}">
+		<link rel="stylesheet" href="/static/css/uniformityrightlads.css">
+		<!--LOADING BARZZZ-->
+		<script src="/static/js/pace.min.js"></script>
+		<link href="/static/css/loadingbar.css" rel="stylesheet" />
+		
+		<meta name="theme-color" content="#eb4034">
+		<meta name="msapplication-navbutton-color" content="#eb4034">
+		<meta name="apple-mobile-web-app-status-bar-style" content="#eb4034">
 	</head>
-	<body {{ if not $ds }} class="ds"{{ end }}>
+	<body {{ if $ds }} class="ds"{{ end }}>
 		{{/*
 			If we're asked to disable the hugeheading, but a KyutGrill is set, it will become the background of the page.
 			This is mainly used in user profiles, allowing users to set their profile background.
@@ -34,14 +30,26 @@
 		*/}}
 		<div class="ui full height main wrapper"
 			{{ if and .DisableHH .KyutGrill }}
-				id="fivehead"
+				style="background-image: url('{{ if .KyutGrillAbsolute }}{{ .KyutGrill }}{{ else }}/static/headers/{{ .KyutGrill }}{{ end }}');"
 			{{ else if .SolidColour }}
 				style="background-color: {{ .SolidColour }}"
 			{{ end }}>
 			{{ template "navbar" . }}
 			{{ if not .DisableHH }}
 				<div class="huge heading {{ if .HeadingOnRight }}right{{ end }} dropped"
-					style="background-image: url('{{ if .KyutGrillAbsolute }}{{ .KyutGrill }}{{ end }}');">
+					style="background-image: url('{{ if .KyutGrillAbsolute }}{{ .KyutGrill }}{{ else }}/static/headers/{{ or .KyutGrill "default.jpg" }}{{ end }}');">
+					<div id="snow-container">
+						<div>
+							<div class="snow large"></div>
+							<div class="snow large delayed"></div>
+							
+							<div class="snow medium"></div>
+							<div class="snow medium delayed"></div>
+							
+							<div class="snow small"></div>
+							<div class="snow small delayed"></div>
+						</div>
+					</div>
 					<div class="ui container">
 						<h1>{{ if .HeadingTitle }}{{ .T .HeadingTitle | html }}{{ else }}{{ .T .TitleBar }}{{ end }}</h1>
 					</div>
@@ -53,7 +61,7 @@
 				<noscript>Research has proven this website works 10000% better if you have JavaScript enabled.</noscript>
 				{{ if and .Context.User.Username (not (has .Context.User.Privileges 1)) }}
 					<div class="ui warning message">
-						{{ $.T "Your account is currently in restricted mode. You will not be able to do certain actions, and your profile can only be seen by you and by Kawata's staff. If you believe we have mistaken putting you in restricted mode, or a month has passed since you first saw this, then you can send an appeal at <a href='mailto:accounts@kawata.pw'>accounts@kawata.pw</a>." | html }}
+						{{ $.T "Your account is currently in restricted mode. You will not be able to do certain actions, and your profile can only be seen by you and by Ripple's staff. If you believe we have mistaken putting you in restricted mode, or a month has passed since you first saw this, then you can send an appeal at <a href='https://support.ripple.moe'>support.ripple.moe</a>." | html }}
 					</div>
 				{{ end }}
 				{{ if .Messages }}
@@ -72,12 +80,12 @@
 				{{ end }}
 				{{ with $settings.game_maintenance.Int }}
 					<div class="ui warning message">
-						{{ $.T "Kawata's score submission is currently in maintenance mode. You will not be allowed to submit scores for the time being." }}
+						{{ $.T "RealistikOsu!'s score submission is currently in maintenance mode. You will not be allowed to submit scores for the time being." }}
 					</div>
 				{{ end }}
 				{{ with $settings.website_maintenance.Int }}
 					<div class="ui warning message">
-						{{ $.T "The Kawata website is currently in maintenance mode. Only certain users are allowed to access the full website." }}
+						{{ $.T "The RealistikOsu! website is currently in maintenance mode. Only certain users are allowed to access the full website." }}
 					</div>
 				{{ end }}
 				</div>
@@ -86,57 +94,63 @@
 
 		</div>
 
-		<div class="footer">
-			{{ .T "&copy; 2018-%d osu!Kawata, powered by Ripple." (curryear) | html }}
-			<a href="/team" title="{{ .T "Who is working on this thing?" }}"><i class="users icon"></i>{{ .T "Team" }}</a> |
-			<a href="https://github.com/kawatapw" title="{{ .T "What's going on under the hood?"}}{{/*'"*/}}"><i class="github icon"></i></a>
-			<a href="https://twitter.com/osukawata" title="{{ .T "Follow us on Twitter!" }}"><i class="twitter icon"></i></a> |
-			<a href="https://hifumi.eu/privacy" title="{{ .T "Privacy Policy" }}"><i class="shield icon"></i>{{ .T "Privacy Policy" }}</a> |
-			<a href="https://hifumi.eu" title="{{ .T "Hifumi" }}">{{ .T "Hifumi" }}</a> |
-			<div class="ui scrolling dropdown" style="margin-left: 5px;" id="language-selector">
-				{{ $lang := .Context.Language }}
-				{{ with $lang }}
-					{{ $info := languageInformationByNameShort . }}
-					<div class="text"><i class="{{ $info.CountryShort }} flag"></i>{{ $info.Name }}</div>
-				{{ else }}
-					<div class="default text">{{ .T "Language" }}</div>
-				{{ end }}
-				<i class="dropdown icon"></i>
-				<div class="menu">
-					{{ range languageInformation }}
-						<div class="{{ if eq .NameShort $lang }}selected {{ end }}item" data-lang="{{ .NameShort }}"><i class="{{ .CountryShort }} flag"></i>{{ .Name }}</div>
-					{{ end }}
+		<div class="footer-bg">
+			<div class="ui container">
+				<div class="ui internally celled grid">
+					<div class="row">
+						<div class="three wide column">
+							<div class="footer-info-block">
+								<a class="footer-title">Help</a> 
+								<ul style="list-style-type: none; padding: 0; margin: 0;">
+									<li>
+										<i><a href="https://dl.ussr.pl/files/osu/ROS.exe">Server Switcher</a></i>
+										<i><a href="https://ussr.pl/doc">Documentation</a></i>
+									</li>
+								</ul>
+							</div> 
+						</div>
+						<div class="three wide column">
+							<div class="footer-info-block">
+								<a class="footer-title">Social</a>
+								<ul style="list-style-type: none; padding: 0; margin: 0;">
+									<li>
+										<i><a href="https://discord.gg/87E2K46" target="_blank">Discord</a></i>
+									</li>
+								</ul>
+							</div>
+						</div>
+						<div class="seven wide column">
+							<div class="footer-info-block">
+								<a class="footer-title">Source Code</a>
+								<ul style="list-style-type: none; padding: 0; margin: 0;">
+									<li>
+										<i><a href="https://github.com/RealistikOsu" target="_blank">GitHub</a></i>
+									</li>
+								</ul>
+							</div>
+						</div>
+						<div class="footer-logo">
+							<span style="color: white; font-size: 30px;">RealistikOsu!</span> 
+							<br>
+							<a class="subtitle" style="font-size: 15px; color: white;">osu! private server</a>
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
 		<script>
 			var hanayoConf = {
 				avatars:   {{ .Conf.AvatarURL }},
-				banchoAPI: {{ .Conf.BanchoAPI }},
+				banchoAPI: {{ .Conf.BanchoAPIPublic }},
 				baseAPI:   {{ .Conf.BaseAPIPublic }},
 				cheesegullAPI: {{ .Conf.CheesegullAPI }},
-				language:  {{ with $lang }}{{ . }}{{ else }}"en"{{ end }},
+				language:  "en",
 			};
 			var currentUserID = {{ .Context.User.ID }};
-			var avatarsVersion = {{ .Context.AvatarsVersion }};
 		</script>
 		{{/* If we got some more scripts to print, print'em */}}
 		<script src="//twemoji.maxcdn.com/2/twemoji.min.js?2.2"></script>
-
-		<!-- CDN scripts -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timeago/1.6.5/jquery.timeago.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/i18next/15.0.9/i18next.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/i18next-xhr-backend/2.0.1/i18nextXHRBackend.min.js"></script>
-
-		<!-- Local scripts -->
-		<script src="/static/semantic.min.js?{{ unixNano }}"></script>
-		<script src="/static/key_plural.js?{{ unixNano }}"></script>
-		<script src="/static/ripple.js?{{ unixNano }}"></script>
-
-		{{ with $lang }}
-			<script src="/static/timeago-locale/jquery.timeago.{{ . }}.js"></script>
-		{{ end }}
+		<script src="/static/dist.min.js?{{ unixNano }}"></script>
+		<script src="/static/timeago-locale/jquery.timeago.en.js"></script>
 		{{ if .Scripts }}
 			{{ range .Scripts }}
 				<script src="{{ . }}?{{ unixNano }}"></script>

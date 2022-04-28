@@ -1,13 +1,21 @@
-# Hanayo [![Build Status](https://drone.nyodev.xyz/api/badges/ripple/hanayo/status.svg)](https://drone.nyodev.xyz/ripple/hanayo)
+# Hanayo - RealistikOsu!'s frontend
 
-This repository has a mirror [here](https://github.com/osuripple/hanayo). The original repo is still [here](https://zxq.co/ripple/hanayo).
+NOTE: The GoLang backed code is broken... We will fix it *soon*...
 
-## To fellow developers: this is not how you do it!
+This the the [frontend](https://ussr.pl/) of RealistikOsu!.
+
+It is based on Ainu's version of [hanayo](https://github.com/osuripple/hanayo).
+
+Some design elements have been taken from osuAkatsuki.
+
+![Website Screenshot](http://im.ussr.online/5e373b25999d90.14380332-aone.png)
+
+## (Ripple Note) To fellow developers: this is not how you do it!
 
 The biggest flaw of hanayo are that when I set out to create it, I wanted to create a template system that:
 
 * Created a handler by simply having the file "be there"
-* Could fetch the data it needed on its own, often from the Ripple API
+* Could fetch the data it needed on its own, often from the RealistikOsu! API
 * Had the actual Go code be as little as possible
 
 This was not immediately evident to me, a Go beginner, but what I did there was basically make Go be PHP.

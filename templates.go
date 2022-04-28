@@ -18,7 +18,7 @@ import (
 	"github.com/pariz/gountries"
 	"github.com/rjeczalik/notify"
 	"github.com/thehowl/conf"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 var templates = make(map[string]*template.Template)
@@ -26,7 +26,6 @@ var baseTemplates = [...]string{
 	"templates/base.html",
 	"templates/navbar.html",
 	"templates/simplepag.html",
-	"templates/donor_locked.html",
 }
 var simplePages []templateConfig
 

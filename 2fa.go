@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
 	"zxq.co/x/rs"
 )
 
@@ -374,7 +374,7 @@ func generateRecoveryCodes() []string {
 
 func generateKey(ctx context) *otp.Key {
 	k, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "Kawata",
+		Issuer:      "RealistikOsu!",
 		AccountName: ctx.User.Username,
 	})
 	if err != nil {

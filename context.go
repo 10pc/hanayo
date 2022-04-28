@@ -4,14 +4,13 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 type context struct {
-	User           sessionUser
-	Token          string
-	Language       string
-	AvatarsVersion uint64
+	User     sessionUser
+	Token    string
+	Language string
 }
 type sessionUser struct {
 	ID         int

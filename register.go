@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -9,7 +11,8 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
+	"zxq.co/ripple/schiavolib"
 )
 
 func register(c *gin.Context) {
@@ -91,6 +94,16 @@ func registerSubmit(c *gin.Context) {
 		return
 	}
 
+	uMulti, criteria := tryBotnets(c)
+	if criteria != "" {
+		schiavo.CMs.Send(
+			fmt.Sprintf(
+				"User **%s** registered with the same %s as %s (%s/u/%s). **POSSIBLE MULTIACCOUNT!!!**. Waiting for ingame verification...",
+				username, criteria, uMulti, config.BaseURL, url.QueryEscape(uMulti),
+			),
+		)
+	}
+
 	// The actual registration.
 	pass, err := generatePassword(c.PostForm("password"))
 	if err != nil {
@@ -107,16 +120,20 @@ func registerSubmit(c *gin.Context) {
 	}
 	lid, _ := res.LastInsertId()
 
-	db.Exec("INSERT INTO `users_stats`(id, username, user_color, user_style, ranked_score_std, playcount_std, total_score_std, ranked_score_taiko, playcount_taiko, total_score_taiko, ranked_score_ctb, playcount_ctb, total_score_ctb, ranked_score_mania, playcount_mania, total_score_mania) VALUES (?, ?, 'black', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);", lid, username)
-	db.Exec("INSERT INTO `users_stats_relax` (id) VALUES (?)", lid)
-	db.Exec("INSERT INTO `users_preferences` (id) VALUES (?)", lid)
+	res, err = db.Exec("INSERT INTO `users_stats`(id, username, user_color, user_style, ranked_score_std, playcount_std, total_score_std, ranked_score_taiko, playcount_taiko, total_score_taiko, ranked_score_ctb, playcount_ctb, total_score_ctb, ranked_score_mania, playcount_mania, total_score_mania) VALUES (?, ?, 'black', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);", lid, username)
+	res, err = db.Exec("INSERT INTO `rx_stats`(id, username, user_color, user_style, ranked_score_std, playcount_std, total_score_std, ranked_score_taiko, playcount_taiko, total_score_taiko, ranked_score_ctb, playcount_ctb, total_score_ctb, ranked_score_mania, playcount_mania, total_score_mania) VALUES (?, ?, 'black', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);", lid, username)
+	res, err = db.Exec("INSERT INTO `ap_stats`(id, username, user_color, user_style, ranked_score_std, playcount_std, total_score_std, ranked_score_taiko, playcount_taiko, total_score_taiko, ranked_score_ctb, playcount_ctb, total_score_ctb, ranked_score_mania, playcount_mania, total_score_mania) VALUES (?, ?, 'black', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);", lid, username)
+	if err != nil {
+		fmt.Println(err)
+	}
+	schiavo.CMs.Send(fmt.Sprintf("User (**%s** | %s) registered from %s", username, c.PostForm("email"), clientIP(c)))
 
 	setYCookie(int(lid), c)
 	logIP(c, int(lid))
 
 	rd.Incr("ripple:registered_users")
 
-	addMessage(c, successMessage{T(c, "You have been successfully registered on Kawata! You now need to verify your account.")})
+	addMessage(c, successMessage{T(c, "You have been successfully registered on RealistikOsu! You now need to verify your account.")})
 	getSession(c).Save()
 	c.Redirect(302, "/register/verify?u="+strconv.Itoa(int(lid)))
 }

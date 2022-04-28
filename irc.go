@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 func ircGenToken(c *gin.Context) {

@@ -21,11 +21,14 @@ import (
 	"github.com/thehowl/qsql"
 	"gopkg.in/mailgun/mailgun-go.v1"
 	"gopkg.in/redis.v5"
-	"github.com/kawatapw/agplwarning"
-	// "github.com/kawatapw/hanayo/routers/oauth"
-	"github.com/kawatapw/hanayo/routers/pagemappings"
-	"github.com/kawatapw/hanayo/services"
-	"github.com/kawatapw/hanayo/services/cieca"
+	"zxq.co/ripple/agplwarning"
+	"github.com/RealistikOsu/hanayo/modules/btcaddress"
+	"github.com/RealistikOsu/hanayo/modules/btcconversions"
+	"github.com/RealistikOsu/hanayo/routers/oauth"
+	"github.com/RealistikOsu/hanayo/routers/pagemappings"
+	"github.com/RealistikOsu/hanayo/services"
+	"github.com/RealistikOsu/hanayo/services/cieca"
+	"zxq.co/ripple/schiavolib"
 	"zxq.co/x/rs"
 )
 
@@ -42,13 +45,13 @@ var (
 		BaseURL         string
 		API             string
 		BanchoAPI       string `description:"Bancho base url (without /api) that hanayo will use to contact bancho"`
+		BanchoAPIPublic string `description:"same as above but this will be put in js files and used by clients. Must be publicly accessible. Leave empty to set to BanchoAPI"`
 		CheesegullAPI   string
 		APISecret       string
 		Offline         bool `description:"If this is true, files will be served from the local server instead of the CDN."`
 
 		MainRippleFolder string `description:"Folder where all the non-go projects are contained, such as old-frontend, lets, ci-system. Used for changelog."`
 		AvatarsFolder    string `description:"location folder of avatars, used for placing the avatars from the avatar change page."`
-		VarnishURL       string
 
 		CookieSecret string
 
@@ -71,12 +74,10 @@ var (
 		RecaptchaSite    string
 		RecaptchaPrivate string
 
-		DiscordOAuthID     string `description:"Deprecated, leave empty"`
-		DiscordOAuthSecret string `description:"Deprecated, leave empty"`
-		DonorBotURL        string `description:"Deprecated, leave empty"`
+		DiscordOAuthID     string
+		DiscordOAuthSecret string
+		DonorBotURL        string
 		DonorBotSecret     string
-
-		OldFrontend string `description:"Used for new DonorBot"`
 
 		CoinbaseAPIKey    string
 		CoinbaseAPISecret string
@@ -84,7 +85,6 @@ var (
 		SentryDSN string
 
 		IP_API string
-
 	}
 	configMap map[string]interface{}
 	db        *sqlx.DB
@@ -99,7 +99,7 @@ var (
 )
 
 func main() {
-	err := agplwarning.Warn("ripple", "Hanayo")
+	err := agplwarning.Warn("RealistikOsu!", "Hanayo")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -119,18 +119,18 @@ func main() {
 	}
 
 	var configDefaults = map[*string]string{
-		&config.ListenTo:         ":45221",
+		&config.ListenTo:         ":6969",
 		&config.CookieSecret:     rs.String(46),
-		&config.AvatarURL:        "https://a.ripple.moe",
-		&config.BaseURL:          "https://ripple.moe",
-		&config.BanchoAPI:        "https://c.ripple.moe",
+		&config.AvatarURL:        "https://a.ussr.pl",
+		&config.BaseURL:          "https://ussr.pl",
+		&config.BanchoAPI:        "https://c.ussr.pl",
 		&config.CheesegullAPI:    "https://storage.ripple.moe/api",
 		&config.API:              "http://localhost:40001/api/v1/",
-		&config.APISecret:        "Potato",
+		&config.APISecret:        "Potatowhat",
 		&config.IP_API:           "https://ip.zxq.co",
-		&config.DiscordServer:    "#",
-		&config.MainRippleFolder: "/home/ripple/ripple",
-		&config.MailgunFrom:      `"Ripple" <noreply@ripple.moe>`,
+		&config.DiscordServer:    "https://discord.gg/87E2K46",
+		&config.MainRippleFolder: "/home/RIPPLE/",
+		&config.MailgunFrom:      `"Ainu" <noreply@ripple.moe>`,
 	}
 	for key, value := range configDefaults {
 		if *key == "" {
@@ -175,6 +175,15 @@ func main() {
 	// initialise oauth
 	setUpOauth()
 
+	// initialise btcaddress
+	btcaddress.Redis = rd
+	btcaddress.APIKey = config.CoinbaseAPIKey
+	btcaddress.APISecret = config.CoinbaseAPISecret
+
+	// initialise schiavo
+	schiavo.Prefix = "hanayo"
+	schiavo.Bunker.Send(fmt.Sprintf("STARTUATO, mode: %s", gin.Mode()))
+
 	// even if it's not release, we say that it's release
 	// so that gin doesn't spam
 	gin.SetMode(gin.ReleaseMode)
@@ -201,6 +210,11 @@ func main() {
 
 	conf.Export(config, "hanayo.conf")
 
+	// default BanchoAPIPublic to BanchoAPI if not set
+	// we must do this after exporting the config
+	if config.BanchoAPIPublic == "" {
+		config.BanchoAPIPublic = config.BanchoAPI
+	}
 	configMap = structs.Map(config)
 
 	fmt.Println("Intialisation:", time.Since(startTime))
@@ -269,8 +283,14 @@ func generateEngine() *gin.Engine {
 	r.POST("/register", registerSubmit)
 	r.GET("/register/verify", verifyAccount)
 	r.GET("/register/welcome", welcome)
+	
+	r.GET("/clans/create", ccreate)
+	r.POST("/clans/create", ccreateSubmit)
 
 	r.GET("/u/:user", userProfile)
+	r.GET("/rx/u/:user", relaxProfile)
+	r.GET("/ap/u/:user", autoProfile)
+	r.GET("/c/:cid", clanPage)
 	r.GET("/b/:bid", beatmapInfo)
 
 	r.POST("/pwreset", passwordReset)
@@ -293,26 +313,33 @@ func generateEngine() *gin.Engine {
 	r.POST("/settings/avatar", avatarSubmit)
 	r.POST("/settings/2fa/disable", disable2fa)
 	r.POST("/settings/2fa/totp", totpSetup)
-	// r.POST("/settings/discord", discordSubmit)
-	// r.GET("/settings/discord/finish", discordLinkFinish)
-	// r.GET("/settings/discord/unlink", discordUnlink)
+	r.GET("/settings/discord/finish", discordFinish)
 	r.POST("/settings/profbackground/:type", profBackground)
+	
+	r.POST("/settings/clansettings", createInvite)
+	r.POST("settings/clansettings/k", clanKick)
+	r.GET("/clans/invite/:inv", clanInvite)
+	r.POST("/c/:cid", leaveClan)
 
-	// r.POST("/dev/tokens/create", createAPIToken)
-	// r.POST("/dev/tokens/delete", deleteAPIToken)
-	// r.POST("/dev/tokens/edit", editAPIToken)
-	// r.GET("/dev/apps", getOAuthApplications)
-	// r.GET("/dev/apps/edit", editOAuthApplication)
-	// r.POST("/dev/apps/edit", editOAuthApplicationSubmit)
-	// r.POST("/dev/apps/delete", deleteOAuthApplication)
+	r.POST("/dev/tokens/create", createAPIToken)
+	r.POST("/dev/tokens/delete", deleteAPIToken)
+	r.POST("/dev/tokens/edit", editAPIToken)
+	r.GET("/dev/apps", getOAuthApplications)
+	r.GET("/dev/apps/edit", editOAuthApplication)
+	r.POST("/dev/apps/edit", editOAuthApplicationSubmit)
+	r.POST("/dev/apps/delete", deleteOAuthApplication)
 
-	// r.GET("/oauth/authorize", oauth.Authorize)
-	// r.POST("/oauth/authorize", oauth.Authorize)
-	// r.GET("/oauth/token", oauth.Token)
-	// r.POST("/oauth/token", oauth.Token)
+	r.GET("/oauth/authorize", oauth.Authorize)
+	r.POST("/oauth/authorize", oauth.Authorize)
+	r.GET("/oauth/token", oauth.Token)
+	r.POST("/oauth/token", oauth.Token)
+
+	r.GET("/donate/rates", btcconversions.GetRates)
+
+	r.Any("/blog/*url", blogRedirect)
 
 	r.GET("/help", func(c *gin.Context) {
-		c.Redirect(301, "https://support.ripple.moe")
+		c.Redirect(301, "https://discord.gg/Qp3WQU8")
 	})
 
 	loadSimplePages(r)
@@ -323,5 +350,5 @@ func generateEngine() *gin.Engine {
 }
 
 const alwaysRespondText = `Ooops! Looks like something went really wrong while trying to process your request.
-Perhaps report this to a Kawata developer?
+Perhaps report this to a Ainu developer?
 Retrying doing again what you were trying to do might work, too.`

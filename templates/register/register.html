@@ -1,4 +1,5 @@
 {{ define "tpl" }}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <div class="ui container">
 	{{ $regEnabled := qb "SELECT value_int FROM system_settings WHERE name = 'registrations_enabled'" }}
 	{{ if .Context.User.ID }}
@@ -17,9 +18,6 @@
 		{{ end }}
 		<div class="tiny container">
 			<div class="ui raised segments">
-				<div class="ui error message">
-					{{ .T "Important notice: While cheating here can be fun, it is totally prohibited on Bancho and other servers. Cheating on legit servers is bad! We recommend using another osu! cilent solely for playing on Kawata." }}
-				</div>
 				<div class="ui segment">
 					<form id="register-form" class="ui form" method="post" action="/register">
 						<div class="field">
@@ -36,7 +34,7 @@
 						</div>
 						{{ with config "RecaptchaSite" }}
 						<div class="field">
-							<div class="g-recaptcha" data-sitekey="{{ . }}"></div>
+							<div class="g-recaptcha" data-sitekey="{{ . }}" data-theme="dark"></div>
 						</div>
 						{{ end }}
 						{{ ieForm .Gin }}

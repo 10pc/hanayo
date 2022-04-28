@@ -20,12 +20,13 @@ import (
 	"github.com/russross/blackfriday"
 	"github.com/thehowl/qsql"
 	"golang.org/x/oauth2"
-	discordoauth "zxq.co/ripple/go-discord-oauth"
-	"github.com/kawatapw/hanayo/modules/bbcode"
-	"github.com/kawatapw/hanayo/modules/doc"
-	fasuimappings "github.com/kawatapw/hanayo/modules/fa-semantic-mappings"
+	"zxq.co/ripple/go-discord-oauth"
+	"github.com/RealistikOsu/hanayo/modules/bbcode"
+	"github.com/RealistikOsu/hanayo/modules/btcaddress"
+	"github.com/RealistikOsu/hanayo/modules/doc"
+	"github.com/RealistikOsu/hanayo/modules/fa-semantic-mappings"
 	"zxq.co/ripple/playstyle"
-	"github.com/kawatapw/api/common"
+	"github.com/RealistikOsu/RealistikAPI/common"
 )
 
 // funcMap contains useful functions for the various templates.
@@ -239,7 +240,7 @@ var funcMap = template.FuncMap{
 				),
 				blackfriday.WithExtensions(blackfriday.CommonExtensions),
 			),
-		)
+        	)
 	},
 	// i is an inline if.
 	// i (cond) (true) (false)
@@ -252,19 +253,10 @@ var funcMap = template.FuncMap{
 	// modes returns an array containing all the modes (in their string representation).
 	"modes": func() []string {
 		return []string{
-			"osu!standard",
-			"osu!taiko",
-			"osu!catch",
+			"osu! standard",
+			"Taiko",
+			"Catch the Beat",
 			"osu!mania",
-		}
-	},
-	// dbModes returns an array containing all the modes (in their string db representation).
-	"dbModes": func() []string {
-		return []string{
-			"std",
-			"taiko",
-			"ctb",
-			"mania",
 		}
 	},
 	// _or is like or, but has only false and nil as its "falsey" values
@@ -406,21 +398,11 @@ var funcMap = template.FuncMap{
 	"styles": func() []string {
 		return playstyle.Styles[:]
 	},
-	"sanestyles": func() []string {
-		s := []string{}
-		for i, v := range playstyle.Styles {
-			if i >= 4 && i <= 8 {
-				continue
-			}
-			s = append(s, v)
-		}
-		return s
-	},
 	// shift shifts n1 by n2
 	"shift": func(n1, n2 int) int {
 		return n1 << uint(n2)
 	},
-	// calculateDonorPrice calculates the price of x donor months in euros.
+	// calculateDonorPrice calculates the price of x donor months in POUNDS I THINK.
 	"calculateDonorPrice": func(a float64) string {
 		return fmt.Sprintf("%.2f", math.Pow(a*30*0.2, 0.7))
 	},
@@ -439,25 +421,8 @@ var funcMap = template.FuncMap{
 	// systemSetting retrieves some information from the table system_settings
 	"systemSettings": systemSettings,
 	// authCodeURL gets the auth code for discord
-	"authCodeURL": func(u int) *string {
-		d, err := http.Get(
-			fmt.Sprintf(
-				config.OldFrontend+"/discord/oauth.php?k=%s&uid=%d",
-				config.DonorBotSecret, u,
-			),
-		)
-		if err != nil {
-			return nil
-		}
-		x := make(map[string]interface{})
-		data, _ := ioutil.ReadAll(d.Body)
-		json.Unmarshal(data, &x)
-		var s string
-		var ok bool
-		if s, ok = x["url"].(string); !ok {
-			return nil
-		}
-		return &s
+	"authCodeURL": func(u int) string {
+		return getDiscord().AuthCodeURL(mustCSRFGenerate(u))
 	},
 	// perc returns a percentage
 	"perc": func(i, total float64) string {
@@ -501,6 +466,7 @@ var funcMap = template.FuncMap{
 		}
 		return x.Val()
 	},
+	"getBitcoinAddress": btcaddress.Get,
 	"languageInformation": func() []langInfo {
 		return languageInformation
 	},
@@ -527,14 +493,11 @@ var funcMap = template.FuncMap{
 	},
 	"htmlescaper": template.HTMLEscaper,
 	"hhmm": func(seconds float64) string {
-		return fmt.Sprintf("%02dh %02dm", int(math.Floor(seconds/3600)), int(math.Floor(seconds/60))%60)
-	},
-	"avatarURL": func(ctx context, userID int) string {
-		return fmt.Sprintf("%s/%d?%d", config.AvatarURL, userID, ctx.AvatarsVersion)
+		return fmt.Sprintf("%02dh %02dm", int(math.Floor(seconds / 3600)), int(math.Floor(seconds / 60)) % 60)
 	},
 }
 
-var localeLanguages = []string{}
+var localeLanguages = []string{"de", "pl", "it", "es", "ru", "fr", "nl", "ro", "fi", "sv", "vi", "th", "ko"}
 
 var hanayoStarted = time.Now().UnixNano()
 
@@ -636,5 +599,18 @@ type langInfo struct {
 }
 
 var languageInformation = []langInfo{
+	{"Deutsch", "de", "de"},
 	{"English (UK)", "gb", "en"},
+	{"Español", "es", "es"},
+	{"Français", "fr", "fr"},
+	{"Italiano", "it", "it"},
+	{"Nederlands", "nl", "nl"},
+	{"Polski", "pl", "pl"},
+	{"Русский", "ru", "ru"},
+	{"Română", "ro", "ro"},
+	{"Suomi", "fi", "fi"},
+	{"Svenska", "se", "sv"},
+	{"Tiếng Việt Nam", "vn", "vi"},
+	{"ภาษาไทย", "th", "th"},
+	{"한국어", "kr", "ko"},
 }
